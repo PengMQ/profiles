@@ -1,0 +1,102 @@
+<?php
+
+/**
+ * @file
+ * UD context build mode conditions and reactions module (ud_context_bm).
+ */
+
+/**
+ * Implementation of hook_ctools_plugin_api().
+ */
+function ud_context_bm_ctools_plugin_api($module, $api) {
+  if ($module == 'context' && $api == 'plugins') {
+    return array('version' => 3);
+  }
+}
+
+/**
+ * Implementation of hook_context_plugins().
+ */
+function ud_context_bm_context_plugins() {
+  /**
+   * Conditions.
+   */
+  $plugins['ud_context_bm_condition'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'ud_context_bm') .'/plugins',
+      'file' => 'ud_context_bm_condition.inc',
+      'class' => 'ud_context_bm_condition',
+      'parent' => 'context_condition',
+    ),
+  );
+
+  /**
+   * Reactions
+   */
+  $plugins['ud_context_bm_reaction'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'ud_context_bm') .'/plugins',
+      'file' => 'ud_context_bm_reaction.inc',
+      'class' => 'ud_context_bm_reaction',
+      'parent' => 'context_reaction'
+    ),
+  );
+  return $plugins;
+}
+
+/**
+ * Implementation of hook_context_registry().
+ */
+function ud_context_bm_context_registry() {
+  return array(
+    'conditions' => array(
+      'ud_context_bm' => array(
+        'title' => t('UD build-modes'),
+        'plugin' => 'ud_context_bm_condition',
+      ),
+    ),
+    'reactions' => array(
+      'ud_context_bm' => array(
+        'title' => t('UD build-modes'),
+        'plugin' => 'ud_context_bm_reaction',
+      ),
+    )
+  );
+}
+
+/**
+ * Implementation of hook_profile_alter().
+ */
+function ud_context_bm_profile_alter(&$account) {
+  // Trigger a build mode.
+  if ($plugin = context_get_plugin('reaction', 'ud_context_bm')) {
+    $plugin->execute($account);
+  }
+  // @todo: without a "ud_context_bm"-reaction having run $account->build_mode
+  // is normally not set here yet.
+  // nd_context_bm and ud_context_bm need to do a better job at providing an
+  // "early" and a "late" point of triggering=reaction and/or detecting=condition
+  // build mode switches.
+  // "early" checkpoint
+  if (isset($account->build_mode)) {
+    if ($plugin = context_get_plugin('condition', 'ud_context_bm')) {
+      $plugin->execute($account, 'view');
+    }
+  }
+}
+
+/**
+ * Implementation of hook_preprocess_user_profile().
+ */
+function ud_context_bm_preprocess_user_profile(&$variables) {
+  $account = $variables['account'];
+  // Break all the rendering if needed.
+  if ($account->render_by_ds) {
+    // "late" checkpoint for detection/condition
+    // @todo: how to ensure that we are never running twice (early & late?)
+    if ($plugin = context_get_plugin('condition', 'ud_context_bm')) {
+      $plugin->execute($account, 'view');
+    }
+    // @todo: allow for a late reaction?
+  }
+}

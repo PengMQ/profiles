@@ -1,0 +1,13 @@
+name = "UD context"
+dependencies[] = "context"
+dependencies[] = "ds"
+description = "Allow ud-build modes to act as conditions and reactions for context module"
+package = "Display suite"
+core = "6.x"
+
+; Information added by drupal.org packaging script on 2012-01-25
+version = "6.x-2.1"
+core = "6.x"
+project = "ud"
+datestamp = "1327459249"
+

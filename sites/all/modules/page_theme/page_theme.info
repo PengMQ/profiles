@@ -1,0 +1,13 @@
+
+name = Page Theme
+description = Allows to use different themes than the site default on specific pages.
+
+core = 6.x
+package = Theme related
+
+; Information added by drupal.org packaging script on 2011-11-30
+version = "6.x-1.1"
+core = "6.x"
+project = "page_theme"
+datestamp = "1322644856"
+

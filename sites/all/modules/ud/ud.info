@@ -1,0 +1,12 @@
+name = "User displays"
+description = "Extended profile display options"
+core = "6.x"
+dependencies[] = ds
+package = "Display suite"
+
+; Information added by drupal.org packaging script on 2012-01-25
+version = "6.x-2.1"
+core = "6.x"
+project = "ud"
+datestamp = "1327459249"
+

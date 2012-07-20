@@ -1,0 +1,120 @@
+<?php
+
+/**
+ * @file
+ * This module displays a list of modules which override the system default
+ * theme sorted by module's call-up.
+ */
+
+
+/**
+ * Implementation of hook_help().
+ */
+function page_theme_debugger_help($path, $arg) {
+
+  switch ($path) {
+
+    case 'admin/help#page_theme_debugger':
+      $output = '<p>'. t('The Page Theme Debugger module displays a list of modules which override the system default theme sorted by module\'s call-up.') .'</p>';
+      $output .= '<p>'. t('For more information, see the online handbook entry for <a href="@page_theme">Page Theme module</a>.', array('@page_theme' => 'http://drupal.org/project/page_theme')) .'</p>';
+      return $output;
+  }
+}
+
+
+/**
+ * Implementation of hook_block().
+ */
+function page_theme_debugger_block($op = 'list', $delta = '', $edit = array()) {
+
+  switch ($op) {
+
+    case 'list':
+      return _page_theme_debugger_block_list();
+
+    case 'configure':
+      return _page_theme_debugger_block_configure($delta);
+
+    case 'save':
+      _page_theme_debugger_block_save($delta, $edit);
+      return;
+
+    case 'view':
+      return _page_theme_debugger_block_view($delta);
+  }
+}
+
+function _page_theme_debugger_block_list() {
+
+  $info = array();
+  $info['page_theme_debugger'] = array(
+    'info' => t('Page Theme Debugger'),
+    'cache' => BLOCK_NO_CACHE,
+  );
+
+  return $info;
+}
+
+function _page_theme_debugger_block_configure($delta = '') {
+
+  $form = array();
+
+  if ($delta == 'page_theme_debugger') {
+
+    $form['page_theme_debugger_blacklist'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Blacklist'),
+      '#description' => t('Enter one module per line of each modules that should not execute <em>hook_custom_theme()</em>. Example modules are <em>og</em> for the Organic Groups module and <em>views</em> for the Views module.'),
+      '#default_value' => variable_get('page_theme_debugger_blacklist', "ctools\nog\nviews"),
+    );
+  }
+
+  return $form;
+}
+
+function _page_theme_debugger_block_save($delta = '', $edit = array()) {
+
+  if ($delta == 'page_theme_debugger') {
+
+    variable_set('page_theme_debugger_blacklist', $edit['page_theme_debugger_blacklist']);
+  }
+}
+
+function _page_theme_debugger_block_view($delta = '') {
+
+  $block = array();
+
+  if ($delta == 'page_theme_debugger') {
+
+    global $custom_theme;
+
+    $page_theme_debugger_blacklist = variable_get('page_theme_debugger_blacklist', "ctools\nog\nviews");
+    $blacklist = preg_split("/\r\n|\n|\r|\s/", $page_theme_debugger_blacklist, -1, PREG_SPLIT_NO_EMPTY);
+
+    $items = array();
+    $items[] = t('Default theme: %theme', array('%theme' => page_theme_get_themes(variable_get('theme_default', 'garland'))));
+
+    $custom_theme_original = $custom_theme;
+
+    foreach (module_implements('init') as $module) {
+
+      if (!in_array($module, $blacklist)) {
+
+        $custom_theme = '-test_custom_theme_test-';
+
+        module_invoke($module, 'init');
+
+        if ($custom_theme != '-test_custom_theme_test-') {
+          $items[] = t('Theme %theme is set by %module', array('%theme' => page_theme_get_themes($custom_theme), '%module' => $module .'_init()'));
+        }
+      }
+    }
+
+    $custom_theme = $custom_theme_original;
+
+    $block['subject'] = t('Page Theme Debugger');
+    $block['content'] = theme('item_list', $items);
+  }
+
+  return $block;
+}
