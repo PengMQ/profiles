@@ -11,7 +11,7 @@
  * See COPYRIGHT.txt and LICENSE.txt.
  */
 
-require_once './includes/bootstrap.inc';
+require_once './includes/bootstrap.inc'; 
 drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
 
 $return = menu_execute_active_handler();
